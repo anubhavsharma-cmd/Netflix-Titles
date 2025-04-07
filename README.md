@@ -42,9 +42,9 @@ This project contains a full SQL-based exploration and analysis of Netflix's con
 - Most TV Shows are single-season.
 
 ##  Files in This Repository
-- `netflix_analysis.sql` – Full SQL analysis with inline insights.
+- `Tableau Public Charts and Dasboard`
 - `README.md` – Project documentation.
-- `netflix_titles.csv` – Original dataset (optional).
+- `netflix_titles.csv` – Original dataset .
 
 ##  Dashboard (Created in Tableau)
 **Visual Suggestions**:
