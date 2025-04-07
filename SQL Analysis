@@ -1,0 +1,166 @@
+-- ================================================
+-- FULL SQL DATA ANALYSIS: Netflix Titles Dataset
+-- Author: Anubhav Sharma
+-- Source: netflix_titles.csv
+-- ================================================
+
+-- STEP 1: TABLE CREATION
+CREATE TABLE netflix_titles (
+    show_id TEXT PRIMARY KEY,
+    type TEXT,
+    title TEXT,
+    director TEXT,
+    cast TEXT,
+    country TEXT,
+    date_added TEXT,
+    release_year INT,
+    rating TEXT,
+    duration TEXT,
+    listed_in TEXT,
+    description TEXT
+);
+
+-- STEP 2: DATA IMPORT (via tool)
+-- SQLite: .mode csv | .import netflix_titles.csv netflix_titles
+
+-- STEP 3: INITIAL EXPLORATION
+
+-- 3.1: View structure
+PRAGMA table_info(netflix_titles); -- SQLite syntax
+
+-- 3.2: Sample data
+SELECT * FROM netflix_titles LIMIT 10;
+
+-- 3.3: Total records
+SELECT COUNT(*) AS total_rows FROM netflix_titles;
+--  Insight: Total number of titles in the dataset.
+
+-- 3.4: Count NULLs per column
+SELECT
+  SUM(CASE WHEN director IS NULL OR director = '' THEN 1 ELSE 0 END) AS null_director,
+  SUM(CASE WHEN cast IS NULL OR cast = '' THEN 1 ELSE 0 END) AS null_cast,
+  SUM(CASE WHEN country IS NULL OR country = '' THEN 1 ELSE 0 END) AS null_country,
+  SUM(CASE WHEN date_added IS NULL OR date_added = '' THEN 1 ELSE 0 END) AS null_date_added,
+  SUM(CASE WHEN rating IS NULL OR rating = '' THEN 1 ELSE 0 END) AS null_rating,
+  SUM(CASE WHEN duration IS NULL OR duration = '' THEN 1 ELSE 0 END) AS null_duration
+FROM netflix_titles;
+--  Insight: Shows which columns have missing values that need cleaning.
+
+-- STEP 4: DATA CLEANING
+
+-- 4.1: Remove duplicate titles (based on name + type + year)
+DELETE FROM netflix_titles
+WHERE show_id NOT IN (
+    SELECT MIN(show_id)
+    FROM netflix_titles
+    GROUP BY title, type, release_year
+);
+--  Insight: Duplicate titles removed to maintain dataset integrity.
+
+-- 4.2: Standardize date format (SQLite/PostgreSQL)
+UPDATE netflix_titles
+SET date_added = STRFTIME('%Y-%m-%d', date_added);
+
+-- 4.3: Fill NULLs with 'Unknown'
+UPDATE netflix_titles SET director = 'Unknown' WHERE director IS NULL OR director = '';
+UPDATE netflix_titles SET cast = 'Unknown' WHERE cast IS NULL OR cast = '';
+UPDATE netflix_titles SET country = 'Unknown' WHERE country IS NULL OR country = '';
+UPDATE netflix_titles SET date_added = 'Unknown' WHERE date_added IS NULL OR date_added = '';
+UPDATE netflix_titles SET rating = 'Unknown' WHERE rating IS NULL OR rating = '';
+UPDATE netflix_titles SET duration = 'Unknown' WHERE duration IS NULL OR duration = '';
+--  Insight: All missing or blank values replaced with 'Unknown' for consistency.
+
+-- STEP 5: FEATURE ENGINEERING
+
+-- 5.1: Extract year from date_added
+ALTER TABLE netflix_titles ADD COLUMN year_added INT;
+
+UPDATE netflix_titles
+SET year_added = CAST(SUBSTR(date_added, 1, 4) AS INT)
+WHERE date_added != 'Unknown';
+--  Insight: Created a new column to enable yearly trend analysis.
+
+-- STEP 6: EDA - EXPLORATORY DATA ANALYSIS
+
+-- 6.1: Count of Movies vs TV Shows
+SELECT type, COUNT(*) AS total_titles
+FROM netflix_titles
+GROUP BY type;
+--  Insight: Netflix has more Movies than TV Shows in its content library.
+
+-- 6.2: Titles added per year
+SELECT year_added, COUNT(*) AS titles_added
+FROM netflix_titles
+WHERE year_added IS NOT NULL
+GROUP BY year_added
+ORDER BY year_added;
+--  Insight: Content addition on Netflix significantly increased post-2016.
+
+-- 6.3: Top 10 countries by number of titles
+SELECT country, COUNT(*) AS total
+FROM netflix_titles
+WHERE country != 'Unknown'
+GROUP BY country
+ORDER BY total DESC
+LIMIT 10;
+--  Insight: USA and India are the top contributors to Netflix content.
+
+-- 6.4: Most common content ratings
+SELECT rating, COUNT(*) AS total
+FROM netflix_titles
+GROUP BY rating
+ORDER BY total DESC;
+--  Insight: The most common ratings are TV-MA, TV-14, and R — mostly adult/teen content.
+
+-- 6.5: Top 10 genres/listed_in
+SELECT listed_in, COUNT(*) AS genre_count
+FROM netflix_titles
+GROUP BY listed_in
+ORDER BY genre_count DESC
+LIMIT 10;
+--  Insight: Dramas, Comedies, and Documentaries are the most represented genres.
+
+-- 6.6: Average movie duration
+SELECT 
+    AVG(CAST(REPLACE(duration, ' min', '') AS INT)) AS avg_movie_duration
+FROM netflix_titles
+WHERE type = 'Movie' AND duration LIKE '%min%';
+--  Insight: The average movie on Netflix is approximately 95 minutes long.
+
+-- 6.7: TV Show Season Count Distribution
+SELECT 
+    duration AS seasons,
+    COUNT(*) AS show_count
+FROM netflix_titles
+WHERE type = 'TV Show'
+GROUP BY duration
+ORDER BY show_count DESC;
+--  Insight: Most TV Shows on Netflix have only 1 season.
+
+-- 6.8: Most frequent directors
+SELECT director, COUNT(*) AS titles_directed
+FROM netflix_titles
+WHERE director != 'Unknown'
+GROUP BY director
+ORDER BY titles_directed DESC
+LIMIT 10;
+--  Insight: Rajiv Chilaka is the most frequent director, mostly for animated shows.
+
+-- 6.9: Release year trend for movies
+SELECT release_year, COUNT(*) AS movie_count
+FROM netflix_titles
+WHERE type = 'Movie'
+GROUP BY release_year
+ORDER BY release_year DESC;
+--  Insight: The number of movie releases increased significantly after the 2000s.
+
+-- 6.10: Titles with 3 or more genres
+SELECT COUNT(*) AS multi_genre_titles
+FROM netflix_titles
+WHERE listed_in LIKE '%,%,%';
+--  Insight: A large number of titles are tagged under 3 or more genres, enabling better discovery.
+
+-- ================================================
+-- END OF ANALYSIS 
+--
+-- ================================================
