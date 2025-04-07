@@ -49,13 +49,12 @@ This project contains a full SQL-based exploration and analysis of Netflix's con
 ##  Dashboard (Created in Tableau)
 **Visual Suggestions**:
 - Pie chart for Movie vs TV Show
-- Line chart for Titles added by year
 - Bar chart for Country-wise content count
 - Pie chart for content rating distribution
-- Word cloud / bar for genre frequency
-- Histogram for TV Show season distribution
-- KPI card for average movie duration
+- Chart for Popular genres
 - Top 10 most frequent directors
+
+  Tableau Public -https://public.tableau.com/shared/CJXT9MZ85?:display_count=n&:origin=viz_share_link
 
 ## 👨‍💻 Author
 **Anubhav Sharma**  
