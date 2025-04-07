@@ -1,4 +1,4 @@
-#  Netflix Titles SQL Analysis Project
+#  Netflix Titles SQL Project
 
 This project contains a full SQL-based exploration and analysis of Netflix's content library dataset using the `netflix_titles.csv` file.
 
